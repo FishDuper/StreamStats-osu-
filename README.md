@@ -32,4 +32,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Acknowledgments**: whiteare35 & shakuraku for their contributions to the osu! community, it was fun reverse-engineering and improving upon the program.
 
 ## Contact Information
-For support or questions, please reach out to on discord, my username is "fishduper".
+For support or questions, please reach out to me on discord, my username is "fishduper".
