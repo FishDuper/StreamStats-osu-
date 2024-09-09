@@ -1,0 +1,58 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Ignore debug and release directories
+[Dd]ebug/
+[Rr]elease/
+
+# Ignore Visual Studio specific files
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# Ignore build directories
+[Bb]in/
+[Oo]bj/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.cache
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+
