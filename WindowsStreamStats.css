@@ -1,0 +1,169 @@
+/* ## Attribution
+
+This project is based on the original work done by whiteare35 & shakuraku. The original program can be found here 
+https://www.dropbox.com/scl/fi/ej2tb6c9yr8iob80jyqmm/hitspeedeng.exe?e=2&rlkey=ujoby9wrfe6bg8w5isml89sb6&dl=0
+
+### Modifications
+
+- Added unstable rate
+- Fixed holding keys down (for windows) 
+- Fixed random typos/whitespace
+
+- Removed (rather did not add) text dependant on speed & / or random numbers.
+
+### License
+
+This project is licensed under the Your Chosen License.
+
+### Notes
+- If anyone wants changes/features you can use the Issues tab I am pretty sure.
+*/
+
+#define NOMINMAX // Prevent windows.h from defining min and max
+#include <iostream>
+#include <iomanip> // precision
+#include <conio.h> // For _getch() 
+#include <chrono>  // For high-resolution clock
+#include <vector>  // For storing intervals
+#include <cmath>   // For sqrt function
+#include <unordered_set> // For tracking pressed keys
+#include <limits> // For std::numeric_limits
+#include <windows.h> // Key press and key release related, windows specifc.
+using namespace std;
+using namespace std::chrono;
+
+int main() {
+    char key1, key2;
+    int numHits;
+    char repeat;
+
+    cout << "\nThanks for trying this stream hit speed test \nFirst, you will need to input the two keys you wish to hit on, \nAlso, enter the total number of hits you are going to hit.\nThis program then calculates how fast you can complete osu! 1/4 streams.\n*** Release version 1.0" << endl;
+        // Set up keys and number of hits
+        cout << "\nSet up key1: ";
+        key1 = _getch();
+        char key1v = static_cast<char>(VkKeyScan(key1)); // Convert the character to virtual key code
+        cout << key1 << endl; // Display the chosen key
+        cout << "Set up key2: ";
+        key2 = _getch();
+        char key2v = static_cast<char>(VkKeyScan(key2));
+        cout << key2; // Display the chosen key
+
+        // Ensure the number of hits is within the range of 20-1000
+       do { // return loop to after the keys have been set and before the number of hits has been printed.
+        do { // validate number of hits
+            cout << "\nNumber of hits (around 20-1000): ";
+            cin >> numHits;
+            if (cin.fail() || numHits < 20 || numHits > 1000) {
+                cout << "Please enter a valid number between 20 and 1000." << endl;
+                cin.clear(); // Clear the error flag
+                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore invalid input
+            }
+        } while (numHits < 20 || numHits > 1000);
+
+        cout << "\n\n******************Ready to calculate,******************" << endl;
+        cout << "*****Pressing any 1 key set will start the timing.*****" << endl;
+        cout << "**Do Not hold on the key, or it won't be counted as hits**" << endl;
+        cout << "******Other random Keys pressed will not be counted.******" << endl;
+
+        int hitCount = 0;
+        char input;
+        do {
+            input = _getch();
+        } while (input != key1 && input != key2);
+        unordered_set<char> pressedKeys; // To track pressed keys
+        std::vector<double> intervals; // To store the intervals between keypresses
+        auto start = high_resolution_clock::now();
+        auto lastTime = start; // Initialize lastTime with the start time
+        bool key1PreviouslyPressed = false; 
+        bool key2PreviouslyPressed = false; // intialized as false because it doesn't matter.
+        pressedKeys.insert(static_cast<char>(VkKeyScan(input))); 
+
+        while (hitCount < numHits) {
+            SHORT key1State = GetAsyncKeyState(static_cast<char>(key1v & 0xFF)); // Mask to get the virtual key code
+            SHORT key2State = GetAsyncKeyState(static_cast<char>(key2v & 0xFF)); // Mask to get the virtual key code
+            if (hitCount == numHits-1) // Last hit
+            {
+                if (key1State & 0x8000 && !key1PreviouslyPressed || key2State & 0x8000 && !key2PreviouslyPressed) // Checks if a key is pressed and was not previously being held.   
+                    hitCount++;
+            }
+            if (key1State & 0x8000) { // Key1 is down
+                if (pressedKeys.find(key1v) == pressedKeys.end()) {
+                    pressedKeys.insert(static_cast<char>(key1v));
+                    key1PreviouslyPressed = true;
+                }
+            }
+            else if (pressedKeys.find(key1v) != pressedKeys.end()) { // Key1 was down and now released
+                auto currentTime = high_resolution_clock::now();
+                auto interval = duration_cast<nanoseconds>(currentTime - lastTime).count() / 1e9; // Interval in seconds
+                intervals.push_back(interval); // Store the interval in seconds
+                lastTime = currentTime; // Update lastTime
+
+                hitCount++;
+                pressedKeys.erase(key1v); // Remove the key from the set when released
+                key1PreviouslyPressed = false;
+            }
+
+            if (key2State & 0x8000) { // Key2 is down
+                if (pressedKeys.find(key2v) == pressedKeys.end()) {
+                    pressedKeys.insert(static_cast<char>(key2v));
+                    key2PreviouslyPressed = true;
+                }
+            }
+            else if (pressedKeys.find(key2v) != pressedKeys.end()) { // Key2 was down and now released
+                auto currentTime = high_resolution_clock::now();
+                auto interval = duration_cast<nanoseconds>(currentTime - lastTime).count() / 1e9; // Interval in seconds
+                intervals.push_back(interval); // Store the interval in seconds
+                lastTime = currentTime; // Update lastTime
+
+                hitCount++;
+                pressedKeys.erase(static_cast<char>(key2v)); // Remove the key from the set when released
+                key2PreviouslyPressed = false;
+            }
+        }
+
+        // End timing
+        auto end = high_resolution_clock::now();
+        duration<double> elapsed = end - start;
+
+        cout << "\n\n\n---------------------------------------------------" << endl;
+        // Calculate BPM
+        double seconds = elapsed.count();
+        double bpm = ((numHits / seconds) * 60.0) * 1/4;
+
+        // Calculate the mean of the intervals
+        double sum = 0.0;
+        for (double interval : intervals) {
+            sum += interval;
+        }
+        double mean = sum / intervals.size();
+      //  cout << "Mean interval: " << mean << " seconds" << endl; line for debugging
+
+        // Calculate the variance
+        double variance = 0.0;
+        for (double interval : intervals) {
+            double diff = interval - mean;
+            variance += diff * diff;
+           // cout << "Interval: " << interval << ", Diff: " << diff << ", Diff^2: " << diff * diff << endl; // Debugging output
+        }
+        variance /= intervals.size();
+
+        // Calculate the standard deviation
+        double stddev = sqrt(variance);
+        double UR = stddev * 10000;
+        double kps = numHits / seconds; 
+        cout << "You might be the ibex\n" << endl; 
+        cout << "You completed " << numHits << " hits in " << fixed << setprecision(2) << seconds << " seconds." << endl;
+        cout << "Average hit speed: " << fixed << setprecision(2) << kps << endl;
+        cout << "Osu! 1/4 stream hits speed is at: " << fixed << setprecision(1) << bpm << endl;
+        cout << "Your unstable rate is " << fixed << setprecision(2) << UR << "\n\n" << endl;
+        cout << "Inspired by whiteare35 & shakuraku\n\n\n\n\n\n\n" << endl;
+        // Ask user if they want to repeat the test.
+        cout << "Would you like to test again? (y/n): ";
+        do {
+            repeat = _getch();
+        } while (repeat != 'y' && repeat != 'Y' && repeat != 'n' && repeat != 'N');
+
+    } while (repeat == 'y' || repeat == 'Y');
+
+    return 0;
+}
