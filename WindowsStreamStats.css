@@ -29,6 +29,7 @@ This project is licensed under the MIT Liscense.
 #include <unordered_set> // For tracking pressed keys
 #include <limits> // For std::numeric_limits
 #include <windows.h> // Key press and key release related, windows specifc.
+#include <cctype> // tolower function, ensures better input reading.
 using namespace std;
 using namespace std::chrono;
 
@@ -41,10 +42,12 @@ int main() {
         // Set up keys and number of hits
         cout << "\nSet up key1: ";
         key1 = _getch();
+        key1 = static_cast<char>(tolower(key1));
         char key1v = static_cast<char>(VkKeyScan(key1)); // Convert the character to virtual key code
         cout << key1 << endl; // Display the chosen key
         cout << "Set up key2: ";
         key2 = _getch();
+        key2 = static_cast<char>(tolower(key2));
         char key2v = static_cast<char>(VkKeyScan(key2));
         cout << key2; // Display the chosen key
 
@@ -69,6 +72,7 @@ int main() {
         char input;
         do {
             input = _getch();
+            input = static_cast<char>(tolower(input));
         } while (input != key1 && input != key2);
         unordered_set<char> pressedKeys; // To track pressed keys
         std::vector<double> intervals; // To store the intervals between keypresses
